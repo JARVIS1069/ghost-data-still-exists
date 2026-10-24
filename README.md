@@ -1,8 +1,8 @@
-# Ghost Data Still Exists — AI Deletion Audit Agent
+﻿# Ghost Data Still Exists â€” AI Deletion Audit Agent
 
 Northstar Shop lost $2.4M after a "deleted" customer reappeared: dashboards said *Complete*, yet personal
 data survived in secondary databases, support attachments, search indexes, analytics exports, logs, archives and
-backups — and a sync job re-created data the account service had deleted.
+backups â€” and a sync job re-created data the account service had deleted.
 
 This agent **proves** whether a person's data is really gone. For each request it decides
 `COMPLETE | INCOMPLETE | NOT_APPLICABLE`, resolves identity (current and historical), lists every exposing
@@ -42,7 +42,7 @@ flowchart TD
 * **Rule engine, no hardcoded rules.** `deletion_rules.csv` is parsed into Delete/Redact/Anonymize/Retain treatments
   that map to remediation and verification operations.
 * **Point-in-time.** Only evidence captured at or before `audit_at` is used; the riskiest state across replicas wins.
-* **Ordering.** FINDING → REMEDIATION → VERIFICATION; inside remediation, recreate paths are stopped
+* **Ordering.** FINDING â†’ REMEDIATION â†’ VERIFICATION; inside remediation, recreate paths are stopped
   (`DISABLE_DATA_FLOW`, `BLOCK_RESTORE`) before any delete/redact/anonymize, per the contract's operation order.
 * **Explainable.** Findings and COMPLETE verifications cite the `evidence_id`; per-case structured logs list the
   evidence used.
@@ -76,8 +76,8 @@ python scripts/make_zip.py
 
 * Status accuracy 93.8% (COMPLETE recall 1.00, INCOMPLETE recall 0.91).
 * Exposed-record precision 1.00 / recall 0.94; recreate-path precision and recall 1.00.
-* Ordered-step LCS 0.83, Kendall tau 0.97, exact sequence match 53%.
-* Activity-stream linking improves exact sequence match from 28% to 53%.
+* Ordered-step LCS 0.90, Kendall tau 1.00, exact sequence match 72%.
+* Activity-stream linking improves exact sequence match from 28% to 72% (accounts, plus masked analytics copies for otherwise-clean cases).
 
 Full tables, confusion matrix and every mismatch: `code/evaluation/evaluation_report.md`.
 
@@ -92,3 +92,4 @@ Full tables, confusion matrix and every mismatch: `code/evaluation/evaluation_re
 
 Use a VLM for screenshots, an LLM tie-breaker for ambiguous identity links, learned evidence-id selection, and
 per-request confidence scores.
+

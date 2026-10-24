@@ -1,4 +1,4 @@
-"""Pipeline orchestration: request -> identity -> evidence state -> rules -> ordered plan."""
+﻿"""Pipeline orchestration: request -> identity -> evidence state -> rules -> ordered plan."""
 from __future__ import annotations
 
 import json
@@ -39,7 +39,7 @@ class AuditAgent:
     rules: RuleEngine
     activity: list[dict]
     classifier: IntentClassifier
-    extra_links: dict[str, str] = field(default_factory=dict)
+    extra_links: dict[str, set] = field(default_factory=dict)
 
     @classmethod
     def from_config(cls, cfg: AgentConfig) -> "AuditAgent":
@@ -60,7 +60,30 @@ class AuditAgent:
         intents = {r.case_id: self.classifier.classify(r.request_text) for r in everyone}
         if self.cfg.link_by_activity:
             self._link_activity([r for r in everyone if intents[r.case_id].is_deletion])
-        return [self.audit(r, intents[r.case_id]) for r in sorted(requests, key=lambda r: r.case_id)]
+        results = [self.audit(r, intents[r.case_id]) for r in sorted(requests, key=lambda r: r.case_id)]
+        if self.cfg.link_by_activity:
+            results = self._second_pass(results, {r.case_id: r for r in everyone})
+        return results
+
+    def _second_pass(self, results: list[CaseResult], reqs: dict[str, Request]) -> list[CaseResult]:
+        """Masked analytics copies: only attributed for cases that otherwise look clean, since a
+        wrongly attributed copy there can only add a verification, never a false violation."""
+        pending = [r for r in results if r.status == "COMPLETE"
+                   and not any(s.resource_id.startswith("analytics_") for s in r.steps)]
+        rows = [{"case_id": r.case_id, "reported_at": reqs[r.case_id].reported_at} for r in pending]
+        claimed = set(self.index.links)
+        links = link_by_activity(rows, self.activity, claimed, {r.case_id: set() for r in pending},
+                                 "analytics", self.cfg.lookback_hours, known=set(self.index.by_resource),
+                                 event_types={"ANONYMIZE_RECORD"})
+        if not links:
+            return results
+        out = []
+        for r in results:
+            if r.case_id in links:
+                self.extra_links.setdefault(r.case_id, set()).add(links[r.case_id])
+                r = self.audit(reqs[r.case_id])
+            out.append(r)
+        return out
 
     def _link_activity(self, cases: list[Request]) -> None:
         has_prefix, claimed = {}, set()
@@ -70,8 +93,9 @@ class AuditAgent:
             has_prefix[r.case_id] = {x.rsplit("_", 1)[0] for x in res}
         claimed = set(self.index.links)
         rows = [{"case_id": r.case_id, "reported_at": r.reported_at} for r in cases]
-        self.extra_links = link_by_activity(rows, self.activity, claimed, has_prefix, "account",
-                                            self.cfg.lookback_hours, known=set(self.index.by_resource))
+        found = link_by_activity(rows, self.activity, claimed, has_prefix, "account",
+                                 self.cfg.lookback_hours, known=set(self.index.by_resource))
+        self.extra_links = {k: {v} for k, v in found.items()}
 
     # ------------------------------------------------------------------ one case
     def audit(self, req: Request, intent=None) -> CaseResult:
@@ -85,8 +109,7 @@ class AuditAgent:
 
     def _audit_identity(self, req: Request, ident: Identity) -> CaseResult:
         resources = set(self.index.by_user.get(ident.user_id, set()))
-        if req.case_id in self.extra_links:
-            resources.add(self.extra_links[req.case_id])
+        resources |= self.extra_links.get(req.case_id, set())
         steps: list[Step] = []
         notes: list[str] = []
         dirty = False
@@ -174,3 +197,4 @@ class AuditAgent:
         return {"case_id": result.case_id, "deletion_status": result.status,
                 "steps_json": json.dumps(to_json_steps(result.steps), ensure_ascii=False,
                                          separators=(",", ":")) if result.steps else "[]"}
+

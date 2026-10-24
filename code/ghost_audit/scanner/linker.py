@@ -1,4 +1,4 @@
-"""Links evidence-less activity events to cases (account deletions masked in evidence).
+﻿"""Links evidence-less activity events to cases (account deletions masked in evidence).
 
 Evidence often lists a deleted account only as ``404`` with no identifier, and the activity
 stream carries resource ids but no user. Within the activity stream a worker finishes a
@@ -27,7 +27,7 @@ def _case_no(case_id: str) -> tuple:
 def link_by_activity(cases: list[dict], activity_rows: list[dict], claimed: set[str],
                      has_prefix: dict[str, set[str]], prefix: str = "account",
                      lookback_h: float = 3.0, lookahead_h: float = 0.25,
-                     known: set[str] | None = None) -> dict[str, str]:
+                     known: set[str] | None = None, event_types: set[str] | None = None) -> dict[str, str]:
     """Return {case_id: resource_id}. ``cases`` rows need case_id/reported_at; ``known`` are resources
     seen in evidence (preferred over resources that never appear anywhere)."""
     known = known or set()
@@ -36,7 +36,7 @@ def link_by_activity(cases: list[dict], activity_rows: list[dict], claimed: set[
         if prefix not in has_prefix.get(c["case_id"], set()) and c.get("reported_at"):
             clusters[c["reported_at"]].append(c)
     events = [a for a in activity_rows
-              if a.get("event_type") in ACTION_EVENTS and a.get("resource_id", "").startswith(prefix + "_")]
+              if a.get("event_type") in (event_types or ACTION_EVENTS) and a.get("resource_id", "").startswith(prefix + "_")]
     used = set(claimed)
     out: dict[str, str] = {}
     for rep in sorted(clusters):
@@ -63,3 +63,4 @@ def link_by_activity(cases: list[dict], activity_rows: list[dict], claimed: set[
             out[case["case_id"]] = rid
             used.add(rid)
     return out
+

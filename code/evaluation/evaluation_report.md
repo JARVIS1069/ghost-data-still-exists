@@ -6,7 +6,7 @@ Validation set: 32 labelled sample cases (`sample_output.csv`). No labels or ids
 
 | Config | Status acc. | Seq. exact | LCS | Kendall tau | Step recall | Exposed P/R | Recreate P/R |
 |---|---|---|---|---|---|---|---|
-| rules-only | 93.8% | 53.1% | 0.833 | 0.969 | 89.1% | 1.00/0.94 | 1.00/1.00 |
+| rules-only | 93.8% | 71.9% | 0.896 | 1.000 | 92.7% | 1.00/0.94 | 1.00/1.00 |
 | rules-no-activity-linking | 93.8% | 28.1% | 0.686 | 0.844 | 81.3% | 1.00/0.94 | 1.00/1.00 |
 
 ## Status metrics (rules-only)
@@ -29,12 +29,12 @@ Confusion matrix (rows = gold, columns = predicted):
 
 | Field | Accuracy |
 |---|---|
-| phase | 98.3% |
-| system_id | 91.5% |
-| resource_id | 90.4% |
-| operation | 89.8% |
-| state | 90.4% |
-| evidence_id | 97.2% |
+| phase | 98.4% |
+| system_id | 94.6% |
+| resource_id | 93.5% |
+| operation | 92.9% |
+| state | 93.5% |
+| evidence_id | 96.7% |
 
 ## Custom evaluation cases (intent classification)
 
@@ -49,21 +49,15 @@ Confusion matrix (rows = gold, columns = predicted):
 
 ## Mismatches with evidence
 
-- **case_03** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_9406', 'VERIFY_RECORD_ANONYMIZED')]
-- **case_04** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'account_004', 'VERIFY_RECORD_ABSENT'), ('VERIFICATION', 'analytics_901', 'VERIFY_RECORD_ANONYMIZED')]
+- **case_04** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'account_004', 'VERIFY_RECORD_ABSENT')]
 - **case_07** gold=INCOMPLETE pred=COMPLETE; missing [('FINDING', 'support_001', 'REPORT_REMAINING_RECORD'), ('REMEDIATION', 'support_001', 'DELETE_RECORD'), ('VERIFICATION', 'support_001', 'VERIFY_RECORD_ABSENT')]
 - **case_10** gold=INCOMPLETE pred=INCOMPLETE; missing [('FINDING', 'support_002', 'REPORT_REMAINING_RECORD'), ('REMEDIATION', 'support_002', 'DELETE_RECORD'), ('VERIFICATION', 'support_002', 'VERIFY_RECORD_ABSENT')]; extra [('FINDING', 'support_002', 'REPORT_EXPOSED_PII'), ('REMEDIATION', 'support_002', 'REDACT_RECORD'), ('VERIFICATION', 'support_002', 'VERIFY_RECORD_REDACTED')]
 - **case_12** gold=INCOMPLETE pred=COMPLETE; missing [('FINDING', 'analytics_9914', 'REPORT_REMAINING_RECORD'), ('REMEDIATION', 'analytics_9914', 'DELETE_RECORD'), ('VERIFICATION', 'analytics_9914', 'VERIFY_RECORD_ABSENT')]
 - **case_17** gold=INCOMPLETE pred=INCOMPLETE; extra [('VERIFICATION', 'account_6523', 'VERIFY_RECORD_ABSENT'), ('VERIFICATION', 'tombstone_17', 'VERIFY_RECORD_REDACTED')]
 - **case_18** gold=INCOMPLETE pred=INCOMPLETE; missing [('VERIFICATION', 'audit_record_6645', 'VERIFY_RECORD_PRESENT')]
 - **case_20** gold=INCOMPLETE pred=INCOMPLETE; missing [('VERIFICATION', 'audit_record_5569', 'VERIFY_RECORD_PRESENT')]
-- **case_21** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_5335', 'VERIFY_RECORD_ANONYMIZED')]
 - **case_22** gold=INCOMPLETE pred=INCOMPLETE; missing [('VERIFICATION', 'account_4990', 'VERIFY_RECORD_ABSENT')]; extra [('VERIFICATION', 'account_6829', 'VERIFY_RECORD_ABSENT')]
 - **case_23** gold=INCOMPLETE pred=INCOMPLETE; missing [('VERIFICATION', 'account_410', 'VERIFY_RECORD_ABSENT')]; extra [('VERIFICATION', 'account_294', 'VERIFY_RECORD_ABSENT')]
-- **case_25** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_1895', 'VERIFY_RECORD_ANONYMIZED')]
-- **case_26** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_4566', 'VERIFY_RECORD_ANONYMIZED')]
-- **case_27** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_4574', 'VERIFY_RECORD_ANONYMIZED')]
-- **case_28** gold=COMPLETE pred=COMPLETE; missing [('VERIFICATION', 'analytics_6077', 'VERIFY_RECORD_ANONYMIZED')]
 
 ## Failures found and improvements made
 
