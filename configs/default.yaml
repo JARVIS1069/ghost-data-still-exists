@@ -1,0 +1,16 @@
+seed: 7
+dataset_dir: dataset
+cache_dir: .cache/ocr
+agent:
+  use_llm: false          # set true (and an API key in .env) for LLM-assisted intent classification
+  link_by_activity: true
+  lookback_hours: 3.0
+evaluation:
+  labelled_requests: dataset/sample_deletion_requests.csv
+  labelled_output: dataset/sample_output.csv
+  report: code/evaluation/evaluation_report.md
+  usage_report: code/evaluation/usage_report.md
+  compare:
+    - {name: rules-only, use_llm: false, link_by_activity: true}
+    - {name: rules-no-activity-linking, use_llm: false, link_by_activity: false}
+    - {name: llm-assisted, use_llm: true, link_by_activity: true}

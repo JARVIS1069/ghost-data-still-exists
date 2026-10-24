@@ -1,0 +1,12 @@
+data/
+dataset/
+.env
+.cache/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+*.zip
+_samp.txt
+out2.csv
