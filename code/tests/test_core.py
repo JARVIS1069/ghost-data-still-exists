@@ -122,3 +122,26 @@ def test_output_schema_constant():
 ])
 def test_intent(text, expected):
     assert heuristic_intent(text).is_deletion is expected
+
+
+# ---- process detector
+def test_detector_flags_active_flow_and_restore():
+    from ghost_audit.models import Observation
+    from ghost_audit.processes import detect
+    import dataclasses
+    fields = {f.name: f for f in dataclasses.fields(Observation)}
+    kwargs = {n: ("" if f.type in ("str", str) else None) for n, f in fields.items()}
+    kwargs.update(state="ACTIVE", evidence_id="evidence_1")
+    ob = Observation(**{k: v for k, v in kwargs.items() if f"{fields[k].default}" == "<dataclasses._MISSING_TYPE object>" or True})
+    flow = detect("DATA_FLOW", "data_flow_1", ob)
+    assert flow.active and flow.remediation_op == "DISABLE_DATA_FLOW"
+    backup = detect("BACKUP_ARCHIVE", "backup_1", ob)
+    assert backup.active and backup.remediation_op == "BLOCK_RESTORE"
+    assert detect("USER_PROFILE", "account_1", ob) is None
+    assert not detect("DATA_FLOW", "data_flow_1", None).active
+
+
+def test_agent_pipeline_uses_process_detector():
+    import inspect
+    from ghost_audit import agent
+    assert "detect(" in inspect.getsource(agent.AuditAgent._plan_resource)

@@ -1,1 +1,1 @@
-from .detector import RECREATING_CATEGORIES, is_active, recreate_kind  # noqa: F401
+﻿from .detector import RECREATING_CATEGORIES, RecreatePath, detect, recreate_kind  # noqa: F401

@@ -1,4 +1,4 @@
-﻿"""Pipeline orchestration: request -> identity -> evidence state -> rules -> ordered plan."""
+"""Pipeline orchestration: request -> identity -> evidence state -> rules -> ordered plan."""
 from __future__ import annotations
 
 import json
@@ -10,6 +10,7 @@ from .identity import IdentityResolver
 from .loaders import (ACTIVITY_COLUMNS, AUDIT_COLUMNS, IDENTITY_COLUMNS, load_csv, load_requests)
 from .models import CaseResult, Identity, Observation, Request, Step
 from .planner import to_json_steps
+from .processes import detect
 from .reasoner import IntentClassifier
 from .rules import RuleEngine
 from .scanner import EvidenceIndex
@@ -158,19 +159,14 @@ class AuditAgent:
         steps: list[Step] = []
         ev = latest.evidence_id if latest else ""
         state = latest.state if latest else "ABSENT"
-        if cat == "DATA_FLOW":
-            if state == "ACTIVE":
-                steps += [Step("FINDING", system, rid, "REPORT_ACTIVE_DATA_FLOW", "ACTIVE", ev),
-                          Step("REMEDIATION", system, rid, "DISABLE_DATA_FLOW", "DISABLED")]
-            steps.append(Step("VERIFICATION", system, rid, "VERIFY_DATA_FLOW_DISABLED", "DISABLED", ev))
-            return steps, state == "ACTIVE"
+        path = detect(cat, rid, latest)
+        if path is not None:
+            if path.active:
+                steps += [Step("FINDING", system, rid, path.finding_op, "ACTIVE", ev),
+                          Step("REMEDIATION", system, rid, path.remediation_op, path.safe_state)]
+            steps.append(Step("VERIFICATION", system, rid, path.verification_op, path.safe_state, ev))
+            return steps, path.active
         rule = self.rules.rule_for(cat)
-        if cat == "BACKUP_ARCHIVE":
-            if state == "ACTIVE":
-                steps += [Step("FINDING", system, rid, "REPORT_RESTORE_RISK", "ACTIVE", ev),
-                          Step("REMEDIATION", system, rid, "BLOCK_RESTORE", "BLOCKED")]
-            steps.append(Step("VERIFICATION", system, rid, "VERIFY_RESTORE_BLOCKED", "BLOCKED", ev))
-            return steps, state == "ACTIVE"
         if rule is None:
             return [], False
         action = rule.action
